@@ -13,9 +13,11 @@ provider:
   environment:
     AUCTION_TABLE_NAME: ${self:custom.AuctionTable.name}
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    AUCTION_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
   iamRoleStatements:
     - ${file(./src/iam/AuctionTableIAM.yml):AuctionTableIAM}
     - ${file(./src/iam/MailQueueIAM.yml):MailQueueIAM}
+    - ${file(./src/iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
 functions:
   createAuction:
@@ -48,12 +50,21 @@ functions:
           authorizer: ${self:custom.authorizer}
   processAuction:
     handler: src/handlers/processAuction.handler
-#    events:
-#      - schedule: rate(1 minute)
+  #    events:
+  #      - schedule: rate(1 minute)
+  uploadAuctionPicture:
+    handler: src/handlers/uploadAuctionPicture.handler
+    events:
+      - http:
+          method: PATCH
+          path: /auction/{id}/picture
+          authorizer: ${self:custom.authorizer}
 
 resources:
   Resources:
     AuctionTable: ${file(./src/resources/AuctionTable.yml):AuctionTable}
+    AuctionsBucket: ${file(./src/resources/AuctionsBucket.yml):AuctionsBucket}
+    AuctionsBucketPolicy: ${file(./src/resources/AuctionsBucket.yml):AuctionsBucketPolicy}
 
 custom:
   authorizer: arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:auth0-authorizer-${self:provider.stage}-auth
@@ -63,5 +74,7 @@ custom:
   MailQueue:
     arn: ${cf:notification-service-${self:provider.stage}.MailQueueArn}
     url: ${cf:notification-service-${self:provider.stage}.MailQueueUrl}
+  AuctionsBucket:
+    name: auction-bucket-31d32asd213-${self:provider.stage}
   bundle:
     linting: false
