@@ -52,7 +52,7 @@ export async function closeAuction(auction) {
         MessageBody: JSON.stringify({
           subject: `Your auction on ${title} has been closed`,
           recipient: seller,
-          body: `Greetings, your items "${title}" has been closed without any  bid`,
+          body: `Greetings, your items "${title}" has been closed without any bid`,
         }),
       })
       .promise();
