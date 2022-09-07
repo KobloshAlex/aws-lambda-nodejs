@@ -14,12 +14,29 @@ provider:
     - Effect: Allow
       Action:
         - ses:SendEmail
-      Resource: arn:aws:ses:*
+        - sqs:ReceiveMessage
+      Resource:
+        - arn:aws:ses:*
+        - ${self:custom.mailQueue.arn}
+
+resources:
+  Resources:
+    MailQueue: ${file(./src/resources/MailQueue.yml):MailQueue}
+  Outputs:
+    MailQueueArn: ${file(./src/resources/MailQueue.yml):Outputs.MailQueueArn}
+    MailQueueUrl: ${file(./src/resources/MailQueue.yml):Outputs.MailQueueUrl}
 
 functions:
   sendEmail:
     handler: src/handlers/sendEmail.handler
-
+    events:
+      - sqs:
+          arn: ${self:custom.mailQueue.arn}
+          batchSize: 1
 custom:
+  mailQueue:
+    name: MailQueue-${self:provider.stage}
+    arn: !GetAtt MailQueue.Arn
+    url: !Ref MailQueue
   bundle:
     linting: false
